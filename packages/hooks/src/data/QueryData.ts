@@ -26,6 +26,7 @@ import { OperationData } from './OperationData';
 
 export class QueryData<TData, TVariables> extends OperationData {
   private previousData: QueryPreviousData<TData, TVariables> = {};
+  // 作用是什么？
   private currentObservable: QueryCurrentObservable<TData, TVariables> = {};
   private forceUpdate: any;
 
@@ -46,9 +47,11 @@ export class QueryData<TData, TVariables> extends OperationData {
   }
 
   public execute(): QueryResult<TData, TVariables> {
+    // NOTE: 继承方法，刷新apollo-client 示例
     this.refreshClient();
 
     const { skip, query } = this.getOptions();
+    // NOTE: 目的是什么
     if (skip || query !== this.previousData.query) {
       this.removeQuerySubscription();
       this.previousData.query = query;
@@ -61,17 +64,18 @@ export class QueryData<TData, TVariables> extends OperationData {
     return this.getExecuteSsrResult() || this.getExecuteResult();
   }
 
+  // NOTE: 事件中触发请求
   public executeLazy(): QueryTuple<TData, TVariables> {
     return !this.runLazy
       ? [
-          this.runLazyQuery,
-          {
-            loading: false,
-            networkStatus: NetworkStatus.ready,
-            called: false,
-            data: undefined
-          } as QueryResult<TData, TVariables>
-        ]
+        this.runLazyQuery,
+        {
+          loading: false,
+          networkStatus: NetworkStatus.ready,
+          called: false,
+          data: undefined
+        } as QueryResult<TData, TVariables>
+      ]
       : [this.runLazyQuery, this.execute()];
   }
 
@@ -106,6 +110,7 @@ export class QueryData<TData, TVariables> extends OperationData {
     return this.unmount.bind(this);
   }
 
+  // NOTE: 目的是什么
   public cleanup() {
     this.removeQuerySubscription();
     delete this.currentObservable.query;
@@ -178,6 +183,7 @@ export class QueryData<TData, TVariables> extends OperationData {
     return result;
   }
 
+  // NOTE: 组合options
   private prepareObservableQueryOptions() {
     const options = this.getOptions();
     this.verifyDocumentType(options.query, DocumentType.Query);
@@ -206,12 +212,14 @@ export class QueryData<TData, TVariables> extends OperationData {
     // See if there is an existing observable that was used to fetch the same
     // data and if so, use it instead since it will contain the proper queryId
     // to fetch the result set. This is used during SSR.
+    // NOTE: 这一句应该也是和SSR相关的
     if (this.context && this.context.renderPromises) {
       this.currentObservable.query = this.context.renderPromises.getSSRObservable(
         this.getOptions()
       );
     }
 
+    // NOTE: 这一句应该是通用的初始化语句
     if (!this.currentObservable.query) {
       const observableQueryOptions = this.prepareObservableQueryOptions();
 
@@ -219,10 +227,12 @@ export class QueryData<TData, TVariables> extends OperationData {
         ...observableQueryOptions,
         children: null
       };
+      // NOTE: 新建了一个Observable对象：zen-observable（https://www.npmjs.com/package/zen-observable）
       this.currentObservable.query = this.refreshClient().client.watchQuery({
         ...observableQueryOptions
       });
 
+      // NOTE: 目的何在，可以肯定的是与SSR渲染相关
       if (this.context && this.context.renderPromises) {
         this.context.renderPromises.registerSSRObservable(
           this.currentObservable.query,
@@ -244,6 +254,7 @@ export class QueryData<TData, TVariables> extends OperationData {
       children: null
     };
 
+    // NOTE: 如果当前观测和上一次观测不一样，则更新
     if (
       !isEqual(
         newObservableQueryOptions,
@@ -257,7 +268,7 @@ export class QueryData<TData, TVariables> extends OperationData {
         // need to log it here. We could conceivably log something if
         // an option was set. OTOH we don't log errors w/ the original
         // query. See https://github.com/apollostack/react-apollo/issues/404
-        .catch(() => {});
+        .catch(() => { });
     }
   }
 
@@ -278,7 +289,7 @@ export class QueryData<TData, TVariables> extends OperationData {
         ) {
           return;
         }
-
+        // 若返回回来的loading,status, data 和当前不一致，则触发组件更新
         this.forceUpdate();
       },
       error: error => {
@@ -358,9 +369,9 @@ export class QueryData<TData, TVariables> extends OperationData {
         result.data =
           previousData && data
             ? {
-                ...previousData,
-                ...data
-              }
+              ...previousData,
+              ...data
+            }
             : previousData || data;
       } else if (error) {
         Object.assign(result, {
@@ -370,7 +381,7 @@ export class QueryData<TData, TVariables> extends OperationData {
       } else {
         const { fetchPolicy } = this.currentObservable.query!.options;
         const { partialRefetch } = options;
-        if (
+        if ( // NOTE: refecth 逻辑
           partialRefetch &&
           !data &&
           partial &&
@@ -429,7 +440,7 @@ export class QueryData<TData, TVariables> extends OperationData {
       }
     }
   }
-
+  // NOTE: 取消订阅，并删除当前订阅
   private removeQuerySubscription() {
     if (this.currentObservable.subscription) {
       this.currentObservable.subscription.unsubscribe();
@@ -475,6 +486,7 @@ export class QueryData<TData, TVariables> extends OperationData {
     >
   ) => this.currentObservable.query!.subscribeToMore(options);
 
+  // NOTE: useQuery 响应体封装
   private observableQueryFields() {
     const observable = this.currentObservable.query!;
     return {

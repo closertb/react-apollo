@@ -14,6 +14,8 @@ export function useDeepMemo<TKey, TValue>(
 ): TValue {
   const ref = useRef<{ key: TKey; value: TValue }>();
 
+  // NOTE: 首次调用，或再次调用深度比较current.key 与 当前key是否一致
+  // 不一致，则发起请求；
   if (!ref.current || !isEqual(key, ref.current.key)) {
     ref.current = { key, value: memoFn() };
   }

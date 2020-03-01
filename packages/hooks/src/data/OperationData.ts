@@ -49,6 +49,7 @@ export abstract class OperationData<TOptions = any> {
   }
 
   protected refreshClient() {
+    // 这里获取的client
     const client =
       (this.options && this.options.client) ||
       (this.context && this.context.client);
@@ -56,8 +57,8 @@ export abstract class OperationData<TOptions = any> {
     invariant(
       !!client,
       'Could not find "client" in the context or passed in as an option. ' +
-        'Wrap the root component in an <ApolloProvider>, or pass an ' +
-        'ApolloClient instance in via options.'
+      'Wrap the root component in an <ApolloProvider>, or pass an ' +
+      'ApolloClient instance in via options.'
     );
 
     let isNew = false;
@@ -79,7 +80,7 @@ export abstract class OperationData<TOptions = any> {
     invariant(
       operation.type === type,
       `Running a ${requiredOperationName} requires a graphql ` +
-        `${requiredOperationName}, but a ${usedOperationName} was used instead.`
+      `${requiredOperationName}, but a ${usedOperationName} was used instead.`
     );
   }
 }
