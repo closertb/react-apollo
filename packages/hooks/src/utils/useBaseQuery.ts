@@ -71,9 +71,9 @@ export function useBaseQuery<TData = any, TVariables = OperationVariables>(
   // 牵连到的方法：execute -> getExecuteResult -> getQueryResult(-> )
   // 伴随执行到的方法：removeQuerySubscription -> updateObservableQuery -> startQuerySubscription
   // 通常来说，execute会执行三次
-  // 第一次是options变化，触发请求；
-  // 第二步：请求开始变化，触发tick变化；
-  // 第三步：请求完成；
+  // 第一次：options变化，触发请求；
+  // 第二次：由于触发了请求，tick变化，触发第二次excute；
+  // 第三次：请求完成，tick变化，，触发第三次excute；
   const result = useDeepMemo(
     () => (lazy ? queryData.executeLazy() : queryData.execute()),
     memo
@@ -83,7 +83,9 @@ export function useBaseQuery<TData = any, TVariables = OperationVariables>(
     ? (result as QueryTuple<TData, TVariables>)[1]
     : (result as QueryResult<TData, TVariables>);
 
-  // queryResult 结果改变，那就触发afterExecute方法
+  // queryResult 结果改变，那就触发afterExecute方法，无缓存时会执行两次
+  // loading 由 false 变为 true时：请求开始
+  // loading 由 true 变为 false时：请求结束
   useEffect(() => queryData.afterExecute({ lazy }), [
     queryResult.loading,
     queryResult.networkStatus,
@@ -91,7 +93,7 @@ export function useBaseQuery<TData = any, TVariables = OperationVariables>(
     queryResult.data
   ]);
 
-  // 首次挂载时触发
+  // 首次挂载时触发，清除上一次建立的query对象，上一次存储的结果
   useEffect(() => {
     return () => queryData.cleanup();
   }, []);

@@ -59,7 +59,10 @@ export class QueryData<TData, TVariables> extends OperationData {
 
     this.updateObservableQuery();
 
-    if (this.isMounted) this.startQuerySubscription();
+    // 二次请求时，
+    if (this.isMounted) {
+      this.startQuerySubscription()
+    };
 
     return this.getExecuteSsrResult() || this.getExecuteResult();
   }
@@ -273,6 +276,7 @@ export class QueryData<TData, TVariables> extends OperationData {
   }
 
   private startQuerySubscription() {
+    // NOTE: 这里保证一个useQuery 只会创建唯一的subscription
     if (this.currentObservable.subscription || this.getOptions().skip) return;
 
     const obsQuery = this.currentObservable.query!;
@@ -402,7 +406,6 @@ export class QueryData<TData, TVariables> extends OperationData {
           result.refetch();
           return result;
         }
-
         result.data = data;
       }
     }
